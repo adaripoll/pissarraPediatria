@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestió de Llits</title>
+  <!-- Enllaç a la fulla d'estil CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<!-- Botó per obrir el panell lateral esquerre -->
+<button id="toggle-panell">☰ Flux de pacients</button>
+
+<!-- Panell lateral esquerre: controla informació de flux de pacients -->
+<div id="panell-lateral">
+  <h2>Dades de flux</h2>
+
+  <!-- Es gestionen els ingressos amb dos formularis: procedència i estat-->
+  <section>
+    <h3>Ingressos <button type="button" onclick="toggleFormulari('form-ingressos')">+</button></h3>
+    <div id="form-ingressos" style="display: none;">
+      <label>Procedència:
+        <select id="procedencia">
+          <option>Ingressos programats</option>
+          <option>Urgències</option>
+          <option>Neonatologia</option>
+          <option>Unitat de crítics pediàtrics</option>
+        </select>
+      </label>
+      <label>Estat:
+        <select id="estat_ingres">
+          <option>Provisional</option>
+          <option>Real</option>
+        </select>
+      </label>
+      <button onclick="afegirIngress()">Afegir ingrés</button>
+    </div>
+    <ul id="llista-ingressos"></ul>
+  </section>
+
+  <!-- Secció per gestionar futurs ingressos (DATA+NOM+EDAT+DIAGNÒSTIC)-->
+  <section>
+    <h3>Futurs ingressos <button type="button" onclick="toggleFormulari('form-futurs')">+</button></h3>
+    <div id="form-futurs" style="display: none;">
+      <label>Data:<input type="date" id="futur_data"></label>
+      <label>Nom:<input type="text" id="futur_nom"></label>
+      <label>
+        Edat:
+        <input type="number" id="futur_edat_valor" min="0">
+        <select id="futur_edat_unitat">
+          <option value="anys">anys</option>
+          <option value="mesos">mesos</option>
+          <option value="dies">dies</option>
+        </select>
+      </label>
+      <label>Diagnòstic:<input type="text" id="futur_diagnostic"></label>
+      <button onclick="afegirFuturIngres()">Afegir futur ingrés</button>
+    </div>
+    <ul id="llista-futurs"></ul>
+  </section>
+
+  <!-- Secció per anotar possibles canvis de llit -->
+  <section>
+    <h3>Possibles canvis de llit <button type="button" onclick="toggleFormulari('form-canvis')">+</button></h3>
+    <div id="form-canvis" style="display: none;">
+      <textarea id="canvi_llit_text" rows="3" placeholder="Descripció..."></textarea>
+      <button onclick="afegirCanviLlit()">Afegir canvi</button>
+    </div>
+    <ul id="llista-canvis-llit"></ul>
+  </section>
+
+  <!-- Secció per gestionar sortides (DESTÍ+TRANSPORT) -->  
+  <section>
+    <h3>Sortides <button type="button" onclick="toggleFormulari('form-sortides')">+</button></h3>
+    <div id="form-sortides" style="display: none;">
+      <label>Destí:
+        <select id="sortida_desti">
+          <option>Domicili</option>
+          <option>Unitat de crítics pediàtrics</option>
+          <option>Altres centres</option>
+        </select>
+      </label>
+      <label>Trasllat/Transport:
+        <input type="text" id="sortida_trasllat">
+      </label>
+      <button onclick="afegirSortida()">Afegir sortida</button>
+    </div>
+    <ul id="llista-sortides"></ul>
+  </section>
+</div>
+
+<!-- Panell dret per serveis i tasques específiques -->
+<button id="toggle-dret">☰ Serveis i tasques específiques</button>
+<div id="panell-dret" class="ocult">
+  <h2>Serveis i tasques específiques</h2>
+
+  <!-- Secció per apuntar l'habitació on s'ha de fer un canvi d'apòsits -->
+  <section>
+    <h3>Canvi apòsits <button type="button" onclick="toggleFormulari('form-aposits')">+</button></h3>
+    <div id="form-aposits" style="display: none;">
+      <label>Habitació:<input type="text" id="aposits_input"></label>
+      <button onclick="afegirAposits()">Afegir</button>
+    </div>
+    <ul id="llista-aposits"></ul>
+  </section>
+  
+  <!-- Secció per apuntar l'habitació on s'ha de fer interconsulta -->
+  <section>
+    <h3>Interconsultes <button type="button" onclick="toggleFormulari('form-interconsulta')">+</button></h3>
+    <div id="form-interconsulta" style="display: none;">
+      <label>Habitació:<input type="text" id="interconsulta_input"></label>
+      <button onclick="afegirInterconsulta()">Afegir</button>
+    </div>
+    <ul id="llista-interconsulta"></ul>
+  </section>
+
+  <!-- Secció per apuntar l'habitació on s'ha de fer fisioteràpia -->
+  <section>
+    <h3>Fisioteràpia <button type="button" onclick="toggleFormulari('form-fisio')">+</button></h3>
+    <div id="form-fisio" style="display: none;">
+      <label>Habitació:<input type="text" id="fisio_input"></label>
+      <button onclick="afegirFisio()">Afegir</button>
+    </div>
+    <ul id="llista-fisio"></ul>
+  </section>
+
+  <!-- Secció per apuntar l'habitació on s'ha de fer sessió de psicologia -->
+  <section>
+    <h3>Psicologia <button type="button" onclick="toggleFormulari('form-psico')">+</button></h3>
+    <div id="form-psico" style="display: none;">
+      <label>Habitació:<input type="text" id="psico_input"></label>
+      <button onclick="afegirPsico()">Afegir</button>
+    </div>
+    <ul id="llista-psico"></ul>
+  </section>
+</div>
+
+<body>
+  <h1>PLANTA DE PEDIATRIA</h1>
+
+  <!-- Contenidor on es generararn els llits-->
+  <div id="planta" class="planta-container"></div>
+
+  <!-- Popup emergent per editar dades d'un pacient -->
+  <div id="popup" class="popup hidden">
+    <div class="popup-content">
+      <span id="tancar-popup" class="tancar">&times;</span>
+      <h2 id="titol-popup">NOM, EDAT, SEXE</h2>
+      
+      <!-- Formulari per entrar les dades del pacient-->
+      <form id="formulari-pacient">
+        <!-- Dades bàsiques (NOM+EDAT+SEXE)-->
+        <label>Nom:<input type="text" name="nom" required></label>
+        <label>
+          Edat:
+          <input type="number" name="edat_valor" min="0" required>
+          <select name="edat_unitat">
+            <!-- Al ser una palanta de pediatria permetem escollir entre anys/mesos/dies-->
+            <option value="anys">anys</option>
+            <option value="mesos">mesos</option>
+            <option value="dies">dies</option>
+          </select>
+        </label>
+        <label>Sexe:
+          <select name="sexe">
+            <option>M</option>
+            <option>F</option>
+            <option>ALTRES</option>
+          </select>
+        </label>
+
+        <!-- Dades mèdiques: diagnòstic, inf assignada i especialitat-->
+        <label>Diagnòstic:<textarea name="diagnostic"></textarea></label>
+        <label>Infermera assignada:<input type="text" name="inf_assignada"></label>
+        <label>Especialitat:
+          <select name="especialitat">
+            <option>Cirurgia</option>
+            <option>Oftalmologia</option>
+            <option>Traumatologia</option>
+            <option>Pneumologia</option>
+            <option>Cardiologia</option>
+            <option>Dermatologia</option>
+            <option>Endicronologia</option>
+            <option>Neurologia</option>
+            <option>Uncologia</option>
+            <option>Otorrinolaringologia</option>
+          </select>
+        </label>
+        
+        <!-- Gestió de l'alta (data previsió+informe+permis)-->
+        <label>Data previsió d'alta:<input type="date" name="alta_prevista"></label>
+        <label>Informe d'alta realitzat?
+          <input type="radio" name="informe_alta" value="Sí"> Sí
+          <input type="radio" name="informe_alta" value="No"> No
+        </label>
+        <label>Permís de sortida?
+          <input type="radio" name="permis_sortida" value="Sí"> Sí
+          <input type="radio" name="permis_sortida" value="No"> No
+        </label>
+
+        <!-- Exploracions complementàries i intervenció quirúrgica-->
+        <fieldset>
+          <legend>
+            Exploracions complementàries
+            <button type="button" onclick="afegirExploracioForm()">Afegir</button>
+          </legend>
+          <div id="formulari-exploracions"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Intervenció quirúrgica</legend>
+          <label>Nom:<input type="text" name="intervencio_nom"></label>
+          <label>Estat:
+            <select name="intervencio_estat">
+              <option>Pendent</option>
+              <option>Realitzada</option>
+            </select>
+          </label>
+          <label><input type="checkbox" name="intervencio_sedacio"> Necessita sedació</label>
+          <label>Data i hora:<input type="datetime-local" name="intervencio_data"></label>
+        </fieldset>
+
+        <!-- Botó que permet reubicar el pacient a una habitació disponible-->
+        <div id="reubicacio-pacient">
+          <label for="reubicar_a">Reubicar a una altra habitació:</label>
+          <select id="reubicar_a">
+            <option value="">-- escull habitació lliure --</option>
+          </select>
+          <button type="button" id="btn-reubicar">Reubicar</button>
+        </div>  
+
+        <!-- Botons: desar dades i donar d'alta-->
+        <button type="submit">Desar dades</button>
+        <button type="button" id="eliminar-pacient" style="background-color: red; color: white; margin-top: 10px;">
+          Donar d'alta el pacient
+        </button>
+
+        <!-- Alertes específiques: aïllament, neteja, dejú...-->
+        <fieldset>
+          <legend>Alertes</legend>
+          <label><input type="checkbox" name="alertes" value="neteja"> Habitació bruta</label>
+          <!-- A aïllament permet anotar el tipus i el responsable-->
+          <label><input type="checkbox" name="alertes" value="aillament"> Aïllament</label>
+          <div class="alerta-subcamp" data-alerta="aillament" style="display: none;">
+            <label>Tipus:
+              <select name="aillament_tipus">
+                <option>Aeri</option>
+                <option>Gotes</option>
+                <option>Contacte</option>
+              </select>
+            </label>
+            <label>Responsable:
+              <select name="aillament_responsable">
+                <option>VRS</option>
+                <option>SARS-CoV-2</option>
+                <option>Adenovirus</option>
+                <option>Altres virus respiratoris</option>
+                <option>Klebsiella BLEE</option>
+                <option>Mycobacterium Tuberculosis</option>
+                <option>Pseudomona Aeruginosa</option>
+                <option>Altres bacteris multi-resistents</option>
+              </select>
+            </label>
+          </div>
+
+          <label><input type="checkbox" name="alertes" value="dietaabsoluta"> Dieta absoluta</label>
+
+          <!-- En l'alerta de dejú, pots posar a partir de quina hora-->
+          <label><input type="checkbox" name="alertes" value="deju"> Dejú a partir de...</label>
+          <div class="alerta-subcamp" data-alerta="deju" style="display: none;">
+            <label>Hora inici dejú:<input type="time" name="deju_hora"></label>
+          </div>
+          <label><input type="checkbox" name="alertes" value="finalvida"> Alerta final de vida</label>
+          <label><input type="checkbox" name="alertes" value="casosespecials"> Casos especials (maltracte...)</label>
+          <label><input type="checkbox" name="alertes" value="bloqueig"> Bloqueig llit costat</label>
+        </fieldset>
+        <!-- Observacions addicionals-->
+            <fieldset>
+              <legend>Observacions</legend>
+              <label><textarea name="observacions"></textarea></label>
+            </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <!-- Enllaç al fitxer JavaScript que gestiona el comportament de l'aplicació -->
+  <script src="script.js"></script>
+</body>
+</html>
