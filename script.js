@@ -6,46 +6,13 @@ const llits = [
   "319A", "319B", "320A", "320B"
 ];
 
+// Es guardem les referència a elements HTML
 const planta = document.getElementById("planta");
 const popup = document.getElementById("popup");
 const tancarBtn = document.getElementById("tancar-popup");
 const formulari = document.getElementById("formulari-pacient");
 let llitActual = "";
 
-// Exploracionc complementàries disponibles
-const EXPLORACIONS = [
-  "rx", "eeg", "rmn", "tac", "eco", "analiticageneral", "analisisang", "urina",
-  "urina24h", "urinocultiu", "femta", "hemocultiu", "mostrarespiratoria", "gammagrafia", "sedacio"
-];
-
-// Funció que genera formulari d'exploracions
-function generarFormulariExploracions(dades = {}) {
-  const container = document.getElementById("exploracions-container");
-  console.log(container);
-  container.innerHTML = "";
-
-  EXPLORACIONS.forEach(nom => {
-    const bloc = document.createElement("div");
-    bloc.className = "exploracio-bloc";
-
-    const checked = dades.exploracions?.[nom]?.actiu ? "checked" : "";
-    const estat = dades.exploracions?.[nom]?.estat || "pendent";
-    const sedacio = dades.exploracions?.[nom]?.sedacio ? "checked" : "";
-    const data = dades.exploracions?.[nom]?.data || "";
-
-    bloc.innerHTML = `
-      <label><input type="checkbox" name="expl-${nom}" ${checked}> ${nom.toUpperCase()}</label>
-      <select name="estat-${nom}">
-        <option value="pendent" ${estat === "pendent" ? "selected" : ""}>pendent</option>
-        <option value="realitzada" ${estat === "realitzada" ? "selected" : ""}>realitzada</option>
-      </select>
-      <label><input type="checkbox" name="sedacio-${nom}" ${sedacio}> sedació</label>
-      <input type="datetime-local" name="data-${nom}" value="${data}">
-    `;
-
-    container.appendChild(bloc);
-  });
-}
 
 // Funció per obtenir les habitacions disponibles
 // (sense pacients assignats i sense bloqueigs)
@@ -58,33 +25,52 @@ function obtenirHabitacionsDisponibles() {
 
 // Crear les caixetes de llits
 llits.forEach((habitacio) => {
+  // Crea un nou div per representar el llit
   const div = document.createElement("div");
   div.className = "llit";
 
+  // Mira si hi ha dades guardades per aquest llit
   const dadesGuardades = JSON.parse(localStorage.getItem(`pacient-${habitacio}`));
+  // Mostra el núm de llit
   let html = `<strong>${habitacio}</strong>`;
   let iconsHTML = "";
 
+  // Si hi ha un pacient, mostra nom, edat i sexe
   if (dadesGuardades?.nom && dadesGuardades?.edat && dadesGuardades?.sexe) {
     html += `<br/>${dadesGuardades.nom}, ${dadesGuardades.edat}, ${dadesGuardades.sexe}`;
   }
 
+  // Si hi ha alertes, mostra les icones
   if (dadesGuardades?.alertes) {
     dadesGuardades.alertes.forEach(alerta => {
       let title = alerta;
+      // si l'alerta és aillament o dejuni, guarda la informació complementaria (tipus, responsable, hora)
       if (alerta === "aillament") {
         title = `Aïllament: ${dadesGuardades.aillament_tipus || ""} - ${dadesGuardades.aillament_responsable || ""}`;
       } else if (alerta === "deju") {
         title = `Dejuni a partir de les ${dadesGuardades.deju_hora || "--:--"}`;
       }
+      // Afegeix la icona 
       iconsHTML += `<img class="alerta-icon" src="img/${alerta}.png" alt="${alerta}" title="${title}">`;
     });
   }
 
+  // Si hi ha exploracions pendents, mostra les icones
+  if (Array.isArray(dadesGuardades?.exploracions)) {
+    dadesGuardades.exploracions.forEach(exp => {
+      if (exp.nom && exp.estat === "pendent") {
+        const title = `Exploració pendent: ${exp.nom.toUpperCase()} - ${exp.data || ""}`;
+        iconsHTML += `<img class="alerta-icon" src="img/${exp.nom}.png" alt="${exp.nom}" title="${title}">`;
+      }
+    });
+  }
+
+  // Si hi ha icones, les afegim al HTML
   if (iconsHTML) {
     html += `<div class="alertes-container">${iconsHTML}</div>`;
   }
 
+  // Assignem el HTML al div
   div.innerHTML = html;
 
   // Obrir el formulari en fer click
@@ -92,16 +78,18 @@ llits.forEach((habitacio) => {
     llitActual = habitacio;
     const dades = JSON.parse(localStorage.getItem(`pacient-${llitActual}`));
 
+    // Títol = nom, edat, sexe
     const titol = (dades?.nom && dades?.edat && dades?.sexe)
       ? `${llitActual} - ${dades.nom}, ${dades.edat}, ${dades.sexe}`
       : `${llitActual} - Habitació buida`;
 
     document.getElementById("titol-popup").textContent = titol;
 
+    // Mostra el popup i carrega les dades del pacient
     popup.classList.remove("hidden");
     carregarDades();
   });
-
+  // Afeigeix el div a la planta
   planta.appendChild(div);
 });
 
@@ -110,26 +98,59 @@ tancarBtn.addEventListener("click", () => {
   popup.classList.add("hidden");
 });
 
-// Guardar les dades del formulari a localStorage
+// Quan guardem dades del formulari:
 formulari.addEventListener("submit", (e) => {
   e.preventDefault();
 
-  const dades = {};
+  const dades = {}; // guardem toes les dades del pacient
 
-  dades.nom = formulari.elements["nom"].value;
+  // Recollim les dades bàsiques
+  dades.nom = formulari.elements["nom"].value.trim();
   dades.edat_valor = formulari.elements["edat_valor"].value;
   dades.edat_unitat = formulari.elements["edat_unitat"].value;
   dades.sexe = formulari.elements["sexe"].value;
 
+  // Si no s'han omplert les dades bàsiques apareix una alerta
   if (!dades.nom || !dades.edat_valor || !dades.edat_unitat || !dades.sexe) {
     alert("Cal omplir nom, edat i sexe.");
     return;
   }
 
+  // Formatem l'edat per guardar-ho en un sol i eliminem els camps de valor i unitat
   dades.edat = `${dades.edat_valor} ${dades.edat_unitat}`;
   delete dades.edat_valor;
   delete dades.edat_unitat;
 
+  // Guardem les alertes
+  dades.alertes = [];
+  document.querySelectorAll('input[name="alertes"]:checked').forEach(cb => {
+    dades.alertes.push(cb.value);
+  });
+
+  // Es guarden els camps especifics de les alertes aillament i deju
+  if (dades.alertes.includes("aillament")) {
+    dades.aillament_tipus = formulari.elements["aillament_tipus"].value || "";
+    dades.aillament_responsable = formulari.elements["aillament_responsable"].value || "";
+  }
+
+  if (dades.alertes.includes("deju")) {
+    dades.deju_hora = formulari.elements["deju_hora"].value || "";
+  }
+
+  // Recollim la resta de dades del formulari
+  dades.diagnostic = formulari.elements["diagnostic"].value;
+  dades.inf_assignada = formulari.elements["inf_assignada"].value;
+  dades.especialitat = formulari.elements["especialitat"].value;
+  dades.alta_prevista = formulari.elements["alta_prevista"].value;
+  dades.informe_alta = formulari.elements["informe_alta"]?.value;
+  dades.permis_sortida = formulari.elements["permis_sortida"]?.value;
+  dades.observacions = formulari.elements["observacions"].value;
+  dades.intervencio_nom = formulari.elements["intervencio_nom"].value;
+  dades.intervencio_estat = formulari.elements["intervencio_estat"].value;
+  dades.intervencio_sedacio = formulari.elements["intervencio_sedacio"].checked;
+  dades.intervencio_data = formulari.elements["intervencio_data"].value;
+
+  // Alertes
   dades.alertes = [];
   document.querySelectorAll('input[name="alertes"]:checked').forEach(cb => {
     dades.alertes.push(cb.value);
@@ -144,21 +165,7 @@ formulari.addEventListener("submit", (e) => {
     dades.deju_hora = formulari.elements["deju_hora"].value || "";
   }
 
-  if (!dades.nom || !dades.edat_valor || !dades.edat_unitat || !dades.sexe) {
-    alert("Cal omplir nom, edat i sexe.");
-    return;
-  }
-
-  dades.edat = `${dades.edat_valor} ${dades.edat_unitat}`;
-  delete dades.edat_valor;
-  delete dades.edat_unitat;
-
-  // Alertes
-  dades.alertes = [];
-  document.querySelectorAll('input[name="alertes"]:checked').forEach(cb => {
-    dades.alertes.push(cb.value);
-  });
-  // Recollir exploracions acceptades
+  // Exploracions acceptades
   dades.exploracions = [];
   document.querySelectorAll(".exploracio-bloc").forEach(bloc => {
     if (bloc.dataset.acceptat === "true") {
@@ -168,21 +175,24 @@ formulari.addEventListener("submit", (e) => {
         sedacio: bloc.dataset.sedacio === "true",
         data: bloc.dataset.data
       });
-    } 
+    }
   });
-  //Guarda les dades a localStorage
+
+  // Guarda les dades al localStorage
   localStorage.setItem(`pacient-${llitActual}`, JSON.stringify(dades));
   actualitzarCaixeta(llitActual, dades);
   aplicarBloqueigsContigus();
 
-  // Actualitza títol
+  // Actualitza el títol (nom, edat, sexe) i els nloquejos
   const titolActualitzat = `${llitActual} - ${dades.nom}, ${dades.edat}, ${dades.sexe}`;
   document.getElementById("titol-popup").textContent = titolActualitzat;
 
   // Tanca el popup
   popup.classList.add("hidden");
+
   console.log("Dades guardades:", dades);
 });
+
 
 // Funció per saber si una habitació, o la del seu costat, està bloquejada (per aïllament o bloqueig)
 function habitacioEsBloquejada(llit) {
@@ -196,7 +206,7 @@ function habitacioEsBloquejada(llit) {
   return bloquejada || costatBloquejat;
 }
 
-// Funció per afegir un formulari d'exploració nou
+// Funció per afegir una exploració nova
 function afegirExploracioForm(dades = {}) {
   const container = document.getElementById("formulari-exploracions");
   const index = container.children.length;
@@ -229,31 +239,65 @@ function afegirExploracioForm(dades = {}) {
     </select>
     <label><input type="checkbox" name="expl-sedacio-${index}"> Sedació</label>
     <input type="datetime-local" name="expl-data-${index}">
-    <button type="button" onclick="acceptarExploracio(this)">✔ Acceptar</button>
+    <button type="button">✔ Acceptar</button>
   `;
 
-  // Si es passen dades per editar, les afegim
+  // Si ja tenim dades, les omplim
   if (dades.nom) div.querySelector(`[name="expl-nom-${index}"]`).value = dades.nom;
   if (dades.estat) div.querySelector(`[name="expl-estat-${index}"]`).value = dades.estat;
   if (dades.sedacio) div.querySelector(`[name="expl-sedacio-${index}"]`).checked = true;
   if (dades.data) div.querySelector(`[name="expl-data-${index}"]`).value = dades.data;
 
+  // Acceptar: guarda dins dataset
+  div.querySelector("button").addEventListener("click", () => {
+    const nom = div.querySelector(`[name="expl-nom-${index}"]`).value;
+    const estat = div.querySelector(`[name="expl-estat-${index}"]`).value;
+    const sedacio = div.querySelector(`[name="expl-sedacio-${index}"]`).checked;
+    const data = div.querySelector(`[name="expl-data-${index}"]`).value;
+
+    if (!nom) {
+      alert("Has d’escollir una exploració.");
+      return;
+    }
+
+    // Guarda a dataset
+    div.dataset.acceptat = "true";
+    div.dataset.nom = nom;
+    div.dataset.estat = estat;
+    div.dataset.sedacio = sedacio;
+    div.dataset.data = data;
+
+    div.style.border = "1px solid green"; // marquem en verd que s'ha acceptat
+  });
+
   container.appendChild(div);
+  // Si ja estava guardada d'abans, la marca automàticament com acceptada 
+  if (dades.nom) {
+    div.dataset.acceptat = "true";
+    div.dataset.nom = dades.nom;
+    div.dataset.estat = dades.estat;
+    div.dataset.sedacio = dades.sedacio ? "true" : "false";
+    div.dataset.data = dades.data || "";
+    div.style.border = "1px solid green";
+  }
 }
 
 // Funció per carregar les dades del pacient al formulari
 function carregarDades() {
-  formulari.reset(); // Esborrem tot 
+  formulari.reset(); // Neteja el formulari
+
+  // Recupera les dades del pacient del localStorage
   const dades = JSON.parse(localStorage.getItem(`pacient-${llitActual}`)) || {};
+
+  // El mateix amb exploracions
   document.getElementById("formulari-exploracions").innerHTML = "";
   if (Array.isArray(dades.exploracions)) {
     dades.exploracions.forEach(exp => afegirExploracioForm(exp));
   }
 
+  // Omplim el formulari amb les dades guardades del pacient
   for (const [clau, valor] of Object.entries(dades)) {
-    const input = formulari.elements[clau];
-
-    // Cas especial: Edat en format anys, mesos, dies
+    // Cas especial: edat separada en valor + unitat
     if (clau === "edat" && typeof valor === "string") {
       const [valorNum, unitat] = valor.split(" ");
       if (formulari.elements["edat_valor"]) {
@@ -262,32 +306,63 @@ function carregarDades() {
       if (formulari.elements["edat_unitat"]) {
         formulari.elements["edat_unitat"].value = unitat;
       }
-      continue; 
+      continue;
     }
 
+    const input = formulari.elements[clau];
     if (!input) continue;
 
-    // Casos especials
+    // Radiobuttons (botó d'opció)
     if (input instanceof RadioNodeList) {
-      //  Radio buttons
       const radio = formulari.querySelector(`[name="${clau}"][value="${valor}"]`);
       if (radio) radio.checked = true;
+
+    // Checkboxes d’alertes: marquem i mostrem els subcamps
     } else if (input.type === "checkbox" && input.name === "alertes") {
-      // Checkboxes per alertes
       if (Array.isArray(dades.alertes)) {
         input.checked = dades.alertes.includes(input.value);
         const sub = document.querySelector(`.alerta-subcamp[data-alerta="${input.value}"]`);
         if (sub) sub.style.display = input.checked ? "block" : "none";
-      } else {
-        input.checked = !!valor;
       }
-    } else if (input.type === "checkbox" && input.name === "exploracio_nom") {
-        input.checked = Array.isArray(dades.exploracio_nom) && dades.exploracio_nom.includes(input.value);
+
+    // si és un input normal, li posem el valor
     } else {
-      // Camps de text, número, data...
       input.value = valor;
     }
   }
+
+  // ALERTES: tornem a marcar i mostrar subcamps
+  document.querySelectorAll('input[name="alertes"]').forEach(cb => {
+    cb.checked = false;
+    const subcamp = document.querySelector(`.alerta-subcamp[data-alerta="${cb.value}"]`);
+    if (subcamp) subcamp.style.display = "none";
+  });
+  // Marquem les alertes guardades i subcamps
+  if (Array.isArray(dades.alertes)) {
+    dades.alertes.forEach(alerta => {
+      const cb = formulari.querySelector(`input[name="alertes"][value="${alerta}"]`);
+      if (cb) {
+        cb.checked = true;
+        const subcamp = document.querySelector(`.alerta-subcamp[data-alerta="${alerta}"]`);
+        if (subcamp) {
+          subcamp.style.display = "block";
+        }
+      }
+    });
+  }
+
+  // Subcamps especials (aillament i deju)
+  if (dades.aillament_tipus)
+    formulari.elements["aillament_tipus"].value = dades.aillament_tipus;
+
+  if (dades.aillament_responsable)
+    formulari.elements["aillament_responsable"].value = dades.aillament_responsable;
+
+  if (dades.deju_hora)
+    formulari.elements["deju_hora"].value = dades.deju_hora;
+
+
+  // Reomplim el desplegable amb habitacions lliures per reubicar
   const selectReubicar = document.getElementById("reubicar_a");
   if (selectReubicar) {
     selectReubicar.innerHTML = `<option value="">-- escull habitació lliure --</option>`;
@@ -298,8 +373,11 @@ function carregarDades() {
       selectReubicar.appendChild(opt);
     });
   }
+
+  // Regenera les exploracions
   generarFormulariExploracions(dades);
 }
+
 
 // Funció per reubicar un pacient a una nova habitació (esborrant les dades de l'habitació d'abans)
 function reubicarPacientA(habitacioNova) {
@@ -310,7 +388,7 @@ function reubicarPacientA(habitacioNova) {
   localStorage.setItem(`pacient-${habitacioNova}`, JSON.stringify(dades));
   actualitzarCaixeta(habitacioNova, dades);
 
-  // Esborrar pacient de l'habitació actual
+  // Esborrar el pacient de l'habitació actual
   localStorage.removeItem(`pacient-${llitActual}`);
   actualitzarCaixeta(llitActual, {});
 
@@ -335,9 +413,11 @@ function obtenirLlitCostat(nomLlit) {
 
 // Funció per actualitzar la caixeta d'un llit amb les dades del pacient
 function actualitzarCaixeta(habitacio, dades) {
+  // busca la caixeta del llit
   const caixeta = [...document.querySelectorAll(".llit")]
     .find(div => div.textContent.includes(habitacio));
 
+  // Si existeix, actualitza el seu contingut
   if (caixeta) {
     const nom = dades.nom || "";
     const edat = dades.edat || "";
@@ -351,6 +431,7 @@ function actualitzarCaixeta(habitacio, dades) {
 
     let iconsHTML = "";
 
+    // Si hi ha alertes, les afegim
     if (dades.alertes) {
       dades.alertes.forEach(alerta => {
         let title = alerta;
@@ -364,15 +445,17 @@ function actualitzarCaixeta(habitacio, dades) {
         iconsHTML += `<img class="alerta-icon" src="img/${alerta}.png" alt="${alerta}" title="${title}">`;
       });
     }
+    // Si hi ha exploracions pendents, les afegim
     if (Array.isArray(dades.exploracions)) {
       dades.exploracions.forEach(exp => {
-        if (exp.nom) {
-          const title = `Exploració: ${exp.nom.toUpperCase()} - ${exp.estat} - ${exp.data || ''}`;
+        if (exp.nom && exp.estat === "pendent") {
+          const title = `Exploració pendent: ${exp.nom.toUpperCase()} - ${exp.estat} - ${exp.data || ''}`;
           iconsHTML += `<img class="alerta-icon" src="img/${exp.nom}.png" alt="${exp.nom}" title="${title}">`;
         }
       });
     }
 
+    // Si hi ha aillament o bloqueig, bloqueja el llit del costat
     if (dades.alertes?.includes("aillament") || dades.alertes?.includes("bloqueig")) {
       const costat = obtenirLlitCostat(habitacio);
       if (costat) {
@@ -382,6 +465,7 @@ function actualitzarCaixeta(habitacio, dades) {
       }
     }
 
+    // Si hi ha icones, les afegim al HTML
     if (iconsHTML) {
       html += `<div class="alertes-container">${iconsHTML}</div>`;
     }
@@ -416,14 +500,14 @@ checkboxes.forEach(cb => {
   });
 });
 
-// Mostra/amaga el panell
+// Mostra/amaga el panell lateral
 const toggleBtn = document.getElementById("toggle-panell");
 const panell = document.getElementById("panell-lateral");
 toggleBtn.addEventListener("click", () => {
   panell.classList.toggle("ocult");
 });
 
-// Funcions per gestionar les llistes d'ingressos, sortides, canvis de llit i futurs ingressos
+// Funció per guardar les llistes d'ingressos, sortides, canvis de llit i futurs ingressos
 function guardarLlista(key, array) {
   localStorage.setItem(key, JSON.stringify(array));
 }
@@ -433,7 +517,7 @@ function carregarLlista(key) {
   return JSON.parse(localStorage.getItem(key)) || [];
 }
 
-// Funció per generar una llista a la pàgina
+// Funció per mostrar una llista 
 function renderLlista(id, key) {
   const llista = document.getElementById(id);
   llista.innerHTML = "";
@@ -443,7 +527,7 @@ function renderLlista(id, key) {
     const li = document.createElement("li");
     const text = typeof obj === "string"
       ? obj  // Per ingressos, sortides, canvis que són simples strings
-      : `${obj.data} - ${obj.nom} (${obj.edat}) - ${obj.diagnostic}`; // Només futurs
+      : `${obj.data} - ${obj.nom} (${obj.edat}) - ${obj.diagnostic}`; // Només futurs ingressos
     li.textContent = text;
 
     // Botó X per eliminar
@@ -465,6 +549,7 @@ function renderLlista(id, key) {
         opt.textContent = llit;
         select.appendChild(opt);
       });
+      // Quan es selecciona una habitació, crea un pacient i el desa
       select.onchange = () => {
         const habitacio = select.value;
         const pacient = {
@@ -486,20 +571,20 @@ function renderLlista(id, key) {
           observacions: ""
         };
 
-        //Desa el pacient
+        //Desa el pacient a localStorage
         localStorage.setItem(`pacient-${habitacio}`, JSON.stringify(pacient));
 
         //Actualitza caixeta i el titol
         actualitzarCaixeta(habitacio, pacient);
         aplicarBloqueigsContigus();
 
-        //Obre popup i carrega dades
+        //Obre popup i carrega les dades
         llitActual = habitacio;
         document.getElementById("titol-popup").textContent = `${habitacio} - ${pacient.nom}, ${pacient.edat}, ${pacient.sexe}`;
         carregarDades();
         popup.classList.remove("hidden");
 
-        // Elimina de la llista de futurs
+        // Elimina aquest pacient de la llista de futurs
         esborrarElement(key, i, id);
       };
       li.appendChild(select);
@@ -517,7 +602,9 @@ function esborrarElement(key, index, id) {
   renderLlista(id, key);
 }
 
-// Funcions per afegir dades a les llistes (afegirIngress)
+// Funcions per afegir dades a les llistes 
+
+// Funció per afegir un ingrés
 function afegirIngress() {
   const procedencia = document.getElementById("procedencia").value;
   const estat = document.getElementById("estat_ingres").value;
@@ -531,27 +618,31 @@ function afegirIngress() {
 
 // Funció per afegir un futur ingrés
 function afegirFuturIngres() {
+  // Recollim les dades del formulari
   const data = document.getElementById("futur_data").value;
   const nom = document.getElementById("futur_nom").value;
   const edatVal = document.getElementById("futur_edat_valor").value;
   const edatUnitat = document.getElementById("futur_edat_unitat").value;
   const diagnostic = document.getElementById("futur_diagnostic").value;
 
+  // Si un camp està buit, mostra un missatge d'alerta
   if (!data || !nom || !edatVal || !edatUnitat || !diagnostic) {
     alert("Cal omplir tots els camps.");
     return;
   }
 
+  // Passa l'edat a text
   const edat = `${edatVal} ${edatUnitat}`;
   const text = `${data} - ${nom} (${edat}) - ${diagnostic}`;
 
+  // Afegeix a la llista de futurs ingressos
   const clau = "futurs";
   const arr = carregarLlista(clau);
   arr.push({ data, nom, edat, diagnostic });
   guardarLlista(clau, arr);
   renderLlista("llista-futurs", clau);
 
-  // Netejar camps
+  // Borra els camps de formulari, per deixar-ho en blanc
   document.getElementById("futur_data").value = "";
   document.getElementById("futur_nom").value = "";
   document.getElementById("futur_edat_valor").value = "";
@@ -609,7 +700,7 @@ function carregarLlistaDret(key) {
   return JSON.parse(localStorage.getItem(key)) || [];
 }
 
-// Funció per generar una llista a la dreta
+// Funció per mostrar una llista al panell dret
 function renderLlistaDret(id, key) {
   const llista = document.getElementById(id);
   llista.innerHTML = "";
@@ -630,7 +721,7 @@ function esborrarElementDret(key, index, id) {
 }
 
 // Funcions per afegir canvis a les llistes de la dreta
-// Funció per afegir un apòsit
+// Funció per afegir un canvi d'apòsit
 function afegirAposits() {
   const text = document.getElementById("aposits_input").value.trim();
   if (text) {
@@ -700,10 +791,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
 // Funció per aplicar bloqueigs als llits contigus de pacients amb aïllament o bloqueig
 function aplicarBloqueigsContigus() {
+  // elimina tots els bloquejos
   document.querySelectorAll(".llit").forEach(div => div.classList.remove("bloquejat"));
-
+  // mira tots els llits
   llits.forEach((habitacio) => {
     const dades = JSON.parse(localStorage.getItem(`pacient-${habitacio}`));
+    // si el pacient te aillament o bloqueig, busca el llit del costat i el bloqueja
     if (dades?.alertes?.includes("aillament") || dades?.alertes?.includes("bloqueig")) {
       const costat = obtenirLlitCostat(habitacio);
       if (costat) {

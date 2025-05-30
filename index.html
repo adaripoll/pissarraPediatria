@@ -4,18 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gestió de Llits</title>
-  <!-- Enllaç a la fulla d'estil CSS -->
+  <!-- Enllaç a la fulla d'estil "style.css" -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
-<!-- Botó per obrir el panell lateral esquerre -->
+<!-- Botó per obrir el panell lateral esquerre (controla el flux d'informació) -->
 <button id="toggle-panell">☰ Flux de pacients</button>
 
-<!-- Panell lateral esquerre: controla informació de flux de pacients -->
 <div id="panell-lateral">
   <h2>Dades de flux</h2>
 
-  <!-- Es gestionen els ingressos amb dos formularis: procedència i estat-->
+  <!-- Secció per gestionar els ingressos (PROCEDÈNCIA + ESTAT)-->
   <section>
     <h3>Ingressos <button type="button" onclick="toggleFormulari('form-ingressos')">+</button></h3>
     <div id="form-ingressos" style="display: none;">
@@ -38,7 +37,7 @@
     <ul id="llista-ingressos"></ul>
   </section>
 
-  <!-- Secció per gestionar futurs ingressos (DATA+NOM+EDAT+DIAGNÒSTIC)-->
+  <!-- Secció per gestionar els futurs ingressos (DATA + NOM + EDAT + DIAGNÒSTIC)-->
   <section>
     <h3>Futurs ingressos <button type="button" onclick="toggleFormulari('form-futurs')">+</button></h3>
     <div id="form-futurs" style="display: none;">
@@ -54,6 +53,7 @@
         </select>
       </label>
       <label>Diagnòstic:<input type="text" id="futur_diagnostic"></label>
+      <!--Botó per afegir el futur ingrés a un dels llits disponibles-->
       <button onclick="afegirFuturIngres()">Afegir futur ingrés</button>
     </div>
     <ul id="llista-futurs"></ul>
@@ -69,7 +69,7 @@
     <ul id="llista-canvis-llit"></ul>
   </section>
 
-  <!-- Secció per gestionar sortides (DESTÍ+TRANSPORT) -->  
+  <!-- Secció per gestionar sortides (DESTÍ + TRANSPORT) -->  
   <section>
     <h3>Sortides <button type="button" onclick="toggleFormulari('form-sortides')">+</button></h3>
     <div id="form-sortides" style="display: none;">
@@ -141,7 +141,7 @@
   <!-- Contenidor on es generararn els llits-->
   <div id="planta" class="planta-container"></div>
 
-  <!-- Popup emergent per editar dades d'un pacient -->
+  <!-- Popup (pantalla emergent) per introduir les dades d'un pacient -->
   <div id="popup" class="popup hidden">
     <div class="popup-content">
       <span id="tancar-popup" class="tancar">&times;</span>
@@ -149,13 +149,13 @@
       
       <!-- Formulari per entrar les dades del pacient-->
       <form id="formulari-pacient">
-        <!-- Dades bàsiques (NOM+EDAT+SEXE)-->
+        <!-- Dades bàsiques (NOM + EDAT + SEXE)-->
         <label>Nom:<input type="text" name="nom" required></label>
         <label>
           Edat:
           <input type="number" name="edat_valor" min="0" required>
           <select name="edat_unitat">
-            <!-- Al ser una palanta de pediatria permetem escollir entre anys/mesos/dies-->
+            <!-- Al ser una palanta de pediatria es pot escollir entre anys, mesos i dies-->
             <option value="anys">anys</option>
             <option value="mesos">mesos</option>
             <option value="dies">dies</option>
@@ -163,13 +163,14 @@
         </label>
         <label>Sexe:
           <select name="sexe">
-            <option>M</option>
-            <option>F</option>
-            <option>ALTRES</option>
+            <option value="">-- Escull sexe --</option>
+            <option value="M">M</option>
+            <option value="F">F</option>
+            <option value="ALTRES">ALTRES</option>
           </select>
         </label>
 
-        <!-- Dades mèdiques: diagnòstic, inf assignada i especialitat-->
+        <!-- Dades mèdiques (DIAGNÒSTIC + INF ASSIGNADA + ESPECIALITAT)-->
         <label>Diagnòstic:<textarea name="diagnostic"></textarea></label>
         <label>Infermera assignada:<input type="text" name="inf_assignada"></label>
         <label>Especialitat:
@@ -187,7 +188,7 @@
           </select>
         </label>
         
-        <!-- Gestió de l'alta (data previsió+informe+permis)-->
+        <!-- Dades de l'alta (PREVISIÓ + INFORME + PERMIS)-->
         <label>Data previsió d'alta:<input type="date" name="alta_prevista"></label>
         <label>Informe d'alta realitzat?
           <input type="radio" name="informe_alta" value="Sí"> Sí
@@ -228,13 +229,13 @@
           <button type="button" id="btn-reubicar">Reubicar</button>
         </div>  
 
-        <!-- Botons: desar dades i donar d'alta-->
+        <!-- Botons de desar dades i donar d'alta-->
         <button type="submit">Desar dades</button>
         <button type="button" id="eliminar-pacient" style="background-color: red; color: white; margin-top: 10px;">
           Donar d'alta el pacient
         </button>
 
-        <!-- Alertes específiques: aïllament, neteja, dejú...-->
+        <!-- Alertes  (aïllament, neteja, dejú...) -->
         <fieldset>
           <legend>Alertes</legend>
           <label><input type="checkbox" name="alertes" value="neteja"> Habitació bruta</label>
@@ -264,7 +265,7 @@
 
           <label><input type="checkbox" name="alertes" value="dietaabsoluta"> Dieta absoluta</label>
 
-          <!-- En l'alerta de dejú, pots posar a partir de quina hora-->
+          <!-- A dejú, pots posar a partir de quina hora-->
           <label><input type="checkbox" name="alertes" value="deju"> Dejú a partir de...</label>
           <div class="alerta-subcamp" data-alerta="deju" style="display: none;">
             <label>Hora inici dejú:<input type="time" name="deju_hora"></label>
@@ -273,7 +274,7 @@
           <label><input type="checkbox" name="alertes" value="casosespecials"> Casos especials (maltracte...)</label>
           <label><input type="checkbox" name="alertes" value="bloqueig"> Bloqueig llit costat</label>
         </fieldset>
-        <!-- Observacions addicionals-->
+        <!-- Observacions -->
             <fieldset>
               <legend>Observacions</legend>
               <label><textarea name="observacions"></textarea></label>
@@ -282,7 +283,7 @@
     </div>
   </div>
 
-  <!-- Enllaç al fitxer JavaScript que gestiona el comportament de l'aplicació -->
+  <!-- Enllaç al fitxer JavaScript que gestiona l'aplicació -->
   <script src="script.js"></script>
 </body>
 </html>

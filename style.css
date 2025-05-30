@@ -1,7 +1,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #cce7ff; /* blau clar */
+  background-color: #cce7ff; /* fons blau clar */
   font-family: Arial, sans-serif;
 }
 
@@ -10,9 +10,10 @@ h1 {
   padding: 20px;
 }
 
+/* distribució dels llits*/
 .planta-container {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, 1fr); /* 6 columnes de llits*/
   gap: 12px;
   padding: 20px;
   max-width: 1000px;
@@ -20,25 +21,26 @@ h1 {
 }
 
 .llit {
-  background-color: #003366; /* blau fosc */
+  background-color: #003366; /* llit blau fosc */
   color: white;
   padding: 15px;
   border-radius: 10px;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease; /* quan passes pel llit es fa una mica més gros*/
 }
 
 .llit:hover {
-  transform: scale(1.03);
+  transform: scale(1.03); /* efecte de zoom al passar el ratolí */
 }
 
+/* pantalla emergent */
 .popup {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.7);
+  background-color: rgba(0,0,0,0.7); /* el fons s'enfosqueix */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -46,7 +48,7 @@ h1 {
 }
 
 .popup.hidden {
-  display: none;
+  display: none; /* amaga el popup si té la classe hidden */
 }
 
 .popup-content {
@@ -54,7 +56,8 @@ h1 {
   padding: 20px;
   max-height: 90vh;
   overflow-y: auto;
-  border-radius: 10px;
+  border-radius: 10px; /* permet anar amunt i avall */
+
   width: 600px;
   position: relative;
 }
@@ -63,6 +66,7 @@ h1 {
   margin-top: 0;
 }
 
+/* formulari popup */
 .popup-content label,
 .popup-content fieldset {
   display: block;
@@ -77,6 +81,7 @@ h1 {
   margin-top: 4px;
 }
 
+/* tancar el popup */
 .tancar {
   position: absolute;
   right: 15px;
@@ -85,11 +90,13 @@ h1 {
   cursor: pointer;
 }
 
+/* subcamps d'alertes */
 .alerta-subcamp {
   margin-left: 20px;
   margin-bottom: 10px;
 }
 
+/* icones d'alertes i exploracions complementàries en el llit */
 .llit img.alerta-icon {
   width: 36px;
   height: 36px;
@@ -97,6 +104,7 @@ h1 {
   margin-right: 3px;
 }
 
+/* panells lateral esquerre */
 #panell-lateral {
   position: fixed;
   top: 0;
@@ -112,10 +120,12 @@ h1 {
   transition: transform 0.3s ease;
 }
 
+/* Amaga el panell */
 #panell-lateral.ocult {
   transform: translateX(-100%);
 }
 
+/* Botó per amagar el panell */
 #toggle-panell {
   position: fixed;
   top: 10px;
@@ -161,6 +171,7 @@ h1 {
   cursor: pointer;
 }
 
+/* Llistes del panell esquerre */
 #panell-lateral ul {
   list-style: none;
   padding-left: 0;
@@ -177,8 +188,7 @@ h1 {
   align-items: center;
 }
 
-
-
+/* El mateix pel panell lateral dret */
 #panell-dret {
   position: fixed;
   top: 0;
@@ -253,6 +263,7 @@ h1 {
   align-items: center;
 }
 
+/* botó X per esborrar dades de les llistes */
 .boto-esborrar {
   background: none;
   border: none;
@@ -266,8 +277,7 @@ h1 {
   color: darkred;
 }
 
-
-
+/* Contenidor de totes les icones (alertes + exploracions)  */
 .alertes-container {
   margin-top: 5px;
   display: flex;
@@ -275,11 +285,13 @@ h1 {
   gap: 4px;
 }
 
+/* estil per a les icones  */
 .alerta-icon {
   width: 32px;
   height: 32px;
 }
 
+/* llits no disponibles marcats en vermell  */
 .llit.bloquejat {
   background-color: #ffcccc; /* vermell suau */
   border: 2px solid red;
